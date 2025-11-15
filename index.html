@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ItsDiv — bio</title>
+<style>
+  /* basic reset */
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    background:linear-gradient(180deg,#0f1226,#0b1220);color:#f8fbff;display:flex;align-items:center;justify-content:center;padding:36px;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  }
+
+  /* brighter backdrop using existing image */
+  body::before{
+    content:'';position:fixed;inset:0;background:linear-gradient(180deg, rgba(6,10,20,0.25), rgba(3,6,12,0.5)), url('back.png') center/cover no-repeat;filter:blur(6px) brightness(0.7);z-index:-2;transition:transform 12s linear;}
+  @keyframes bgPan{0%{transform:scale(1) translateY(0)}50%{transform:scale(1.01) translateY(-1%)}100%{transform:scale(1) translateY(0)}}
+  body::before{animation:bgPan 30s infinite;}
+
+  /* click overlay */
+  #logo-screen{position:fixed;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.55),rgba(0,0,0,0.45));display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;opacity:0;transition:opacity .6s cubic-bezier(.2,.9,.2,1)}
+  #logo-screen.show{opacity:1}
+  /* understated overlay text */
+  #logo-screen div{color:#f1f5f9;font-size:1.4rem;font-weight:600;letter-spacing:0.6px;text-shadow:none;position:relative;padding:12px 18px;border-radius:8px;background:rgba(3,6,12,0.45);border:1px solid rgba(255,255,255,0.03)}
+
+  @keyframes logoPulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+
+  .container{opacity:0;transform:translateY(22px);transition:all .6s cubic-bezier(.2,.9,.2,1);display:flex;flex-direction:column;align-items:center;gap:20px}
+  .visible{opacity:1;transform:none}
+
+  .card{width:560px;background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));border-radius:14px;padding:26px 34px;backdrop-filter:blur(6px);box-shadow:0 10px 40px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.035);transition:transform .35s ease,box-shadow .35s ease}
+  .card:hover{transform:translateY(-6px);box-shadow:0 24px 60px rgba(0,0,0,0.6)}
+
+  .avatar{width:140px;height:140px;border-radius:50%;overflow:hidden;margin:0 auto 12px;border:3px solid rgba(0,229,255,0.18);box-shadow:0 10px 40px rgba(0,229,255,0.06), inset 0 -6px 30px rgba(0,0,0,0.25);transition:transform .35s ease}
+  .avatar:hover{transform:scale(1.06) rotate(-2deg)}
+  .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+
+  h2{font-size:2rem;text-align:center;margin-bottom:6px;background:linear-gradient(90deg,#ffd7e6,#9ef6ff);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;letter-spacing:1px}
+  p.location{text-align:center;color:#c7d2da;margin-bottom:8px}
+
+  .stats{text-align:center;margin-top:10px}
+  .stat{display:inline-block;background:rgba(255,255,255,0.03);padding:8px 14px;border-radius:12px;font-weight:600;color:#eaf6ff;border:1px solid rgba(255,255,255,0.02);animation:statPulse 2.8s infinite}
+  @keyframes statPulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
+
+  .player{width:560px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;border:1px solid rgba(0,229,255,0.08)}
+  .player p{font-weight:700;color:#e8f6ff;margin:0 0 4px 0}
+  .progress{height:10px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden}
+  .bar{height:100%;width:0;background:linear-gradient(270deg,#7ff3ff,#ffd7e6,#7ff3ff);background-size:200% 100%;animation:barMove 4s linear infinite;box-shadow:0 6px 24px rgba(94,240,255,0.12)}
+  @keyframes barMove{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+  .controls{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+  #playPause{background:linear-gradient(90deg,#5ef0ff,#ffd7e6);border:none;padding:10px 18px;border-radius:10px;font-weight:800;cursor:pointer;color:#041018;box-shadow:0 10px 36px rgba(94,240,255,0.08);transition:transform .2s}
+  /* replace boring upward slide with subtle scale+rotate+glow */
+  #playPause:hover{transform:scale(1.04) rotate(-1deg);box-shadow:0 18px 48px rgba(94,240,255,0.12)}
+  input[type=range]{width:160px}
+
+  /* social icons: force black & white */
+  #social-bg{width:560px;height:66px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.008));border-radius:12px;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:20px;border:1px solid rgba(255,255,255,0.02)}
+  #socials img{width:44px;height:44px;filter:grayscale(1) contrast(1) brightness(0.95);transition:filter .25s,transform .25s}
+  /* social hover: scale + slight rotate + brighten (no vertical slide) */
+  #socials a:hover img{transform:scale(1.12) rotate(-8deg);filter:grayscale(0) contrast(1.12) brightness(1.06);box-shadow:0 10px 30px rgba(0,0,0,0.45),0 0 20px rgba(158,246,255,0.06)}
+
+  footer{position:fixed;right:16px;bottom:12px;color:#b9c5cf;font-size:13px}
+
+  @media (max-width:600px){.card,.player,#social-bg{width:94vw}}
+
+  /* snow canvas */
+  #snow-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+  .sparkle{position:absolute;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.9);box-shadow:0 0 12px rgba(255,255,255,0.6);opacity:0;transform:translateY(0) scale(0.6);animation:twinkle 3s infinite ease-in-out}
+  @keyframes twinkle{0%{opacity:0;transform:scale(0.6)}40%{opacity:0.9;transform:scale(1.1)}100%{opacity:0;transform:scale(0.6)}}
+
+  /* Korea clock (top-left) */
+  #kr-clock{position:fixed;left:12px;top:12px;z-index:60;padding:8px 12px;background:rgba(2,8,20,0.55);backdrop-filter:blur(4px);color:#e8f6ff;font-weight:700;border-radius:10px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 6px 20px rgba(0,0,0,0.6);font-family:Inter,system-ui;font-size:13px;letter-spacing:0.6px}
+  #kr-clock .tz{display:block;font-size:11px;color:#b9c5cf;font-weight:600}
+  /* helper to hide/show clock reliably */
+  #kr-clock.hidden{display:none !important;opacity:0}
+
+  
+
+  /* neon lines - floating decorative bars */
+  .neon-line{position:fixed;height:2px;border-radius:4px;opacity:0.12;pointer-events:none;z-index:5;mix-blend-mode:screen;filter:blur(6px)}
+  @keyframes neonDrift{0%{transform:translateY(-8px) translateX(0) rotate(0)}50%{transform:translateY(8px) translateX(6px) rotate(0.25deg)}100%{transform:translateY(-8px) translateX(0) rotate(0)}}
+
+  /* extra twinkle (bigger sparkles) */
+  .big-spark{position:fixed;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.9);box-shadow:0 0 18px rgba(255,255,255,0.9);opacity:0;transform:scale(0.7);animation:bigTwinkle 4s infinite ease-in-out}
+  @keyframes bigTwinkle{0%{opacity:0;transform:scale(0.7)}30%{opacity:0.95;transform:scale(1.12)}100%{opacity:0;transform:scale(0.7)}}
+  </style>
+</head>
+<body>
+
+<canvas id="snow-canvas"></canvas>
+
+<!-- Seoul clock (English label) -->
+<div id="kr-clock" class="hidden" aria-live="polite" title="Seoul Time (UTC+9)">--:--:--<span class="tz">Seoul Time (UTC+9)</span></div>
+
+<div id="logo-screen">
+  <!-- simple entry text -->
+  <div>Click to enter</div>
+</div>
+
+ 
+
+<div class="container" id="profile">
+  <div class="card">
+    <div class="avatar"><img src="myskin.png" alt=""></div>
+    <h2>ItsDiv</h2>
+    <p class="location">South Korea</p>
+    
+  </div>
+
+  <div class="player">
+    <p><b>audio.mp3</b></p>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <div class="time" id="timeDisplay">00:00 / 00:00</div>
+    <div class="controls">
+      <button id="playPause">II</button>
+      <label>Volume <input type="range" id="volume" min="0" max="1" step="0.01" value="0.3"></label>
+    </div>
+  </div>
+
+  <div id="social-bg">
+    <div id="socials">
+      <a href="https://www.youtube.com/@d1v-mc" target="_blank">
+        <img src="youtube-logo.png" alt="YouTube">
+      </a>
+      <a href="https://discord.gg/zgUzzZBs9P" target="_blank">
+        <img src="discord-logo.png" alt="Discord">
+      </a>
+    </div>
+  </div>
+
+  <footer>Made by <a href="#">ItsDiv</a></footer>
+</div>
+
+<audio id="player" src="audio.mp3" autoplay muted loop></audio>
+
+<script>
+const logoScreen=document.getElementById('logo-screen');
+const profile=document.getElementById('profile');
+const audio=document.getElementById('player');
+const bar=document.getElementById('bar');
+const timeDisplay=document.getElementById('timeDisplay');
+const volumeSlider=document.getElementById('volume');
+const playPauseBtn=document.getElementById('playPause');
+
+// 첫 클릭 화면
+logoScreen.addEventListener('click',()=>{
+  logoScreen.style.opacity='0';
+  setTimeout(()=>logoScreen.style.display='none',600);
+  profile.classList.add('visible');
+  audio.muted=false; audio.volume=0.3; audio.play().catch(()=>{});
+});
+
+// fade-in overlay on load
+document.addEventListener('DOMContentLoaded', ()=>{
+  setTimeout(()=>{
+    if(logoScreen) logoScreen.classList.add('show');
+  }, 80); // slight delay to allow CSS to settle
+});
+
+ 
+
+// 볼륨 조절
+volumeSlider.addEventListener('input',()=>{audio.volume=volumeSlider.value;});
+
+// 재생/일시정지 - 아스키 버튼
+playPauseBtn.textContent='II'; // 초기 상태: 일시정지 표시
+playPauseBtn.addEventListener('click',()=>{
+  if(audio.paused){
+    audio.play();
+    playPauseBtn.textContent='II';
+  } else {
+    audio.pause();
+    playPauseBtn.textContent='▷';
+  }
+});
+
+function formatTime(sec){
+  if(isNaN(sec)) return "00:00";
+  const m=Math.floor(sec/60);
+  const s=Math.floor(sec%60);
+  return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+
+function updateBar(){
+  if(!isNaN(audio.duration)){
+    const progress=(audio.currentTime/audio.duration)*100;
+    bar.style.width=progress+'%';
+    timeDisplay.textContent=`${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+  }
+  requestAnimationFrame(updateBar);
+}
+updateBar();
+</script>
+
+<script>
+// Snow particle engine (lightweight canvas-based)
+(function(){
+  const canvas=document.getElementById('snow-canvas');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  let particles=[];
+  let w=0,h=0,dpr=window.devicePixelRatio||1;
+
+  function resize(){
+    dpr=window.devicePixelRatio||1;
+    w=canvas.width = Math.floor(window.innerWidth * dpr);
+    h=canvas.height = Math.floor(window.innerHeight * dpr);
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  function rand(min,max){return Math.random()*(max-min)+min}
+
+  function createParticles(){
+    particles.length=0;
+    // scale count with width but keep it reasonable
+    const base = Math.max(60, Math.round(window.innerWidth / 10));
+    const count = Math.min(220, base);
+    for(let i=0;i<count;i++){
+      particles.push({
+        x: Math.random()*window.innerWidth,
+        y: Math.random()*window.innerHeight,
+        r: rand(0.6,3.6),
+        vx: rand(-0.35,0.35),
+        vy: rand(0.35,1.4),
+        o: rand(0.25,0.95)
+      });
+    }
+  }
+
+  function drawParticle(p){
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(255,255,255,${p.o})`;
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  function step(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(let i=0;i<particles.length;i++){
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      // light horizontal drifting
+      p.vx += Math.sin((p.y + p.x) / 120) * 0.002;
+      if(p.x < -10) p.x = window.innerWidth + 10;
+      if(p.x > window.innerWidth + 10) p.x = -10;
+      if(p.y > window.innerHeight + 10){
+        p.y = -10;
+        p.x = Math.random()*window.innerWidth;
+      }
+      drawParticle(p);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function init(){
+    resize();
+    createParticles();
+    step();
+  }
+
+  window.addEventListener('resize', ()=>{ resize(); createParticles(); });
+  // conserve on small/mobile: reduce particle count
+  if(/Mobi|Android|Tablet|iPad|iPhone/i.test(navigator.userAgent) && window.innerWidth < 700){
+    // create fewer particles for mobile
+    setTimeout(()=>{ createParticles(); }, 120);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
+
+<!-- extra animation script: neon lines, twinkles and Korea clock updater -->
+<script>
+// avoid duplicating if re-run
+(function(){
+  // CLOCK (Seoul) - English format and hide while entry overlay is visible
+  const clockEl = document.getElementById('kr-clock');
+  function updateClock(){
+    try{
+      const now = new Date();
+      // use 24-hour style for clarity and en locale for foreigners
+      const timeStr = now.toLocaleTimeString('en-GB', {hour12:false, timeZone: 'Asia/Seoul'});
+      const dateStr = now.toLocaleDateString('en-GB', {timeZone: 'Asia/Seoul'});
+      if(clockEl) clockEl.innerHTML = `${timeStr}<span class="tz">Seoul Time (UTC+9) • ${dateStr}</span>`;
+    }catch(e){
+      if(clockEl) clockEl.textContent = new Date().toLocaleTimeString();
+    }
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Clock visibility: keep hidden until profile is shown. Use class toggles for robustness.
+  const overlay = document.getElementById('logo-screen');
+  const profileNode = document.getElementById('profile');
+  // ensure it's hidden at start (markup may already have .hidden)
+  if(clockEl) clockEl.classList.add('hidden');
+
+  // Observe profile node for the 'visible' class (added when overlay is dismissed)
+  if(profileNode && clockEl){
+    const mo = new MutationObserver((mutations, obs)=>{
+      if(profileNode.classList.contains('visible')){
+        clockEl.classList.remove('hidden');
+        obs.disconnect();
+      }
+    });
+    mo.observe(profileNode, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  // Fallback: show clock shortly after overlay click (matches overlay hide timing)
+  if(overlay && clockEl){
+    overlay.addEventListener('click', ()=>{ setTimeout(()=>clockEl.classList.remove('hidden'), 620); });
+  }
+
+  // Neon lines
+  function createNeonLines(n=8){
+    for(let i=0;i<n;i++){
+      const el=document.createElement('div');
+      el.className='neon-line';
+      const w = Math.round(Math.random()*(420-80)+80);
+      const left = Math.random()*100;
+      const top = Math.random()*80 + 6; // near top area
+      el.style.width = w + 'px';
+      el.style.left = left + '%';
+      el.style.top = top + 'vh';
+      el.style.background = `linear-gradient(90deg, rgba(173,216,255,0.12), rgba(255,192,203,0.14))`;
+      const dur = Math.random()*8 + 6;
+      el.style.animation = `neonDrift ${dur}s ease-in-out ${Math.random()*3}s infinite`;
+      el.style.opacity = 0.12 + Math.random()*0.18;
+      document.body.appendChild(el);
+    }
+  }
+  createNeonLines(10);
+
+  // Twinkles (big sparks)
+  function createBigSparks(n=10){
+    for(let i=0;i<n;i++){
+      const s = document.createElement('div');
+      s.className='big-spark';
+      s.style.left = Math.random()*100 + '%';
+      s.style.top = Math.random()*100 + '%';
+      s.style.animationDelay = (Math.random()*4)+'s';
+      document.body.appendChild(s);
+    }
+  }
+  createBigSparks(12);
+
+  // Subtle breathing on header elements
+  const profileEl = document.querySelector('.container');
+  if(profileEl){ profileEl.style.transition = 'transform 0.8s ease'; }
+
+  // small billboard shimmer on footer
+  const footer = document.querySelector('footer');
+  if(footer){ footer.style.transition='filter .35s ease, text-shadow .35s ease'; }
+
+  // optional: mousemove parallax for subtle depth
+  let lastMove = 0;
+  window.addEventListener('mousemove', (e)=>{
+    const now = Date.now(); if(now - lastMove < 16) return; lastMove = now;
+    const cx = window.innerWidth/2; const cy = window.innerHeight/2;
+    const dx = (e.clientX - cx)/cx; const dy = (e.clientY - cy)/cy;
+    const tx = dx * 6; const ty = dy * 6;
+    // apply to snow canvas and container for subtle effect
+    const canvas = document.getElementById('snow-canvas');
+    if(canvas) canvas.style.transform = `translate(${tx}px, ${ty}px)`;
+    if(profileEl) profileEl.style.transform = `translate(${tx/2}px, ${ty/2}px)`;
+  });
+})();
+</script>
