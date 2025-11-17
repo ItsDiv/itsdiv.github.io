@@ -1,5 +1,8 @@
 여러분, 그거 아시나요? strict_pvp(누드JS,너드JS) 는 BL 을 재미로 봅니다 :skull:
-Guys, do you know what? strict_pvp (nude JS, nerd JS) sees BL for fun :skull:
+
+
+
+Guys, know this? strict_pvp (nude JS, nerd JS) sees BL for fun :skull:
 
 
 
